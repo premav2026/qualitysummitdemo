@@ -10,7 +10,7 @@ covering the happy-path purchase flow only.
 ```
 src/test/java/com/demoblaze/
   base/
-    BaseTest.java          # Playwright/Browser/Context lifecycle (TestNG hooks)
+    BaseTest.java          # Shared Playwright/Browser/Context/Page lifecycle (TestNG hooks)
   pages/
     HomePage.java          # category selection, product links, cart nav
     ProductPage.java       # title/price/description, add-to-cart
@@ -22,6 +22,17 @@ src/test/java/com/demoblaze/
 testng.xml                 # TestNG suite definition
 pom.xml
 ```
+
+### Test session lifecycle
+
+`BaseTest` opens one `BrowserContext`/`Page` per **test class**
+(`@BeforeClass`/`@AfterClass`), not per test method. `HappyPathPurchaseTest`'s
+TC-01..TC-07 are chained steps of a single guest session (cart state has to
+carry across them), so they intentionally share cookies/localStorage rather
+than each getting an isolated context. One consequence: since later steps
+`dependsOnMethods` on earlier ones, a failure partway through reports the
+remaining steps as **skipped**, not failed - a genuinely green run means
+0 failed *and* 0 skipped, not just 0 failed.
 
 ## First-time setup
 
@@ -52,11 +63,11 @@ and complete a purchase" JIRA ticket:
 
 | Test method | Ticket AC | What it checks |
 |---|---|---|
-| `shouldFilterProductsByCategory` | AC-1 | Category nav filters the product grid |
+| `shouldFilterProductsByCategory` | AC-1 | Category nav filters the product grid to exactly that category's products (compared against the `/bycat` API response) |
 | `shouldShowProductDetails` | AC-2 | Product page shows title/price/description/Add to cart |
 | `shouldConfirmAddToCart` | AC-3 | Add to cart triggers a confirmation alert |
-| `shouldShowProductInCart` | AC-4 | Product appears correctly in the cart table |
-| `shouldCompleteCheckoutAndReturnHome` | AC-5, AC-6, AC-7 | Checkout modal → purchase → confirmation → return home with empty cart |
+| `shouldShowProductInCart` | AC-4 | Product appears correctly in the cart table (name and price) |
+| `shouldCompleteCheckoutAndReturnHome` | AC-5, AC-6, AC-7 | Checkout modal → purchase → confirmation (id/amount/card/name/date) → return home with empty cart |
 
 ## Known simplifications (given "happy path only" scope)
 
@@ -72,9 +83,10 @@ and complete a purchase" JIRA ticket:
   change without notice — if a test starts failing on an element-not-found
   error, check the actual page markup first before assuming a real app bug.
 - `BaseTest` auto-accepts all JS dialogs via `page.onDialog(dialog ->
-  dialog.accept())`. This is convenient for the happy path but means no
-  test currently asserts on the *exact text* of the "Product added" alert —
-  add that if a future ticket requires verifying alert copy specifically.
+  dialog.accept())`. This is convenient for the happy path, and
+  `shouldConfirmAddToCart` asserts a dialog fired, but no test asserts on
+  the *exact text* of the "Product added" alert — add that if a future
+  ticket requires verifying alert copy specifically.
 
 ## Extending this for the multi-agent pipeline
 
