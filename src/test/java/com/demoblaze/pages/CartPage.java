@@ -28,6 +28,11 @@ public class CartPage {
     return page.locator(CART_ROWS).nth(rowIndex).locator("td").nth(1).textContent().trim();
   }
 
+  /** Returns the price text for a given row index (0-based). */
+  public String itemPriceAt(int rowIndex) {
+    return page.locator(CART_ROWS).nth(rowIndex).locator("td").nth(2).textContent().trim();
+  }
+
   public Locator rows() {
     return page.locator(CART_ROWS);
   }

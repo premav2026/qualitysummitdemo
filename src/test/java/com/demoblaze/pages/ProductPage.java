@@ -36,11 +36,21 @@ public class ProductPage {
   }
 
   /**
-   * Clicks "Add to cart". BaseTest already auto-accepts the resulting JS
-   * alert via page.onDialog, so this just performs the click.
+   * Clicks "Add to cart" and waits for the underlying /addtocart XHR to
+   * complete before returning. Demoblaze shows its "Product added" alert
+   * asynchronously after this request resolves, so callers that need to
+   * assert the alert appeared (see BaseTest.waitForDialog) should still
+   * wait for the dialog flag afterwards - this only guarantees the
+   * network round-trip has finished, not that the alert has rendered.
+   *
+   * Assumption: the add-to-cart request URL contains "/addtocart" - this
+   * matches Demoblaze's publicly documented API but hasn't been verified
+   * live from this environment.
    */
   public ProductPage addToCart() {
-    page.locator(ADD_TO_CART_BTN).click();
+    page.waitForResponse(
+        resp -> resp.url().contains("/addtocart"),
+        () -> page.locator(ADD_TO_CART_BTN).click());
     return this;
   }
 
