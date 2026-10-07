@@ -1,6 +1,10 @@
 package com.demoblaze.pages;
 
 import com.microsoft.playwright.Page;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Page object for the "Place Order" checkout modal.
@@ -19,6 +23,25 @@ public class CheckoutModal {
 
   public CheckoutModal(Page page) {
     this.page = page;
+  }
+
+  /** Returns the labels of any checkout fields that are not visible (empty if all are shown). */
+  public List<String> missingFields() {
+    Map<String, String> fields = new LinkedHashMap<>();
+    fields.put("Name", NAME_INPUT);
+    fields.put("Country", COUNTRY_INPUT);
+    fields.put("City", CITY_INPUT);
+    fields.put("Credit Card", CARD_INPUT);
+    fields.put("Month", MONTH_INPUT);
+    fields.put("Year", YEAR_INPUT);
+
+    List<String> missing = new ArrayList<>();
+    fields.forEach((label, selector) -> {
+      if (!page.locator(selector).isVisible()) {
+        missing.add(label);
+      }
+    });
+    return missing;
   }
 
   public CheckoutModal fillName(String name) {

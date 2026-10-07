@@ -5,15 +5,16 @@ import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import java.util.ArrayList;
+import java.util.List;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 
 /**
  * Base class for all tests: owns the Playwright/Browser lifecycle.
- * A fresh BrowserContext + Page is created per test method so tests don't
- * leak state (cookies, localStorage cart data) into one another.
+ * One BrowserContext + Page is created per test class, so test methods that
+ * are chained with dependsOnMethods share the same page and cart state as a
+ * single scenario, while separate test classes stay isolated from each other.
  */
 public class BaseTest {
 
@@ -24,36 +25,35 @@ public class BaseTest {
   private BrowserContext context;
   protected Page page;
 
+  /** Messages of the JS dialogs (alert/confirm) shown on the page, in order. */
+  protected final List<String> dialogMessages = new ArrayList<>();
+
   @BeforeClass
-  public void launchBrowser() {
+  public void launchBrowserAndPage() {
     playwright = Playwright.create();
     boolean headless = !"false".equalsIgnoreCase(System.getProperty("headless", "true"));
     browser = playwright.chromium().launch(
         new BrowserType.LaunchOptions().setHeadless(headless));
-  }
 
-  @BeforeMethod
-  public void newContextAndPage() {
     context = browser.newContext();
     page = context.newPage();
 
     // Demoblaze uses JS `alert()` on "Add to cart" and other actions.
-    // Auto-accept dialogs so they don't block execution; tests that need
-    // to assert on the dialog message can override this per-method.
-    page.onDialog(dialog -> dialog.accept());
+    // Record each message so tests can assert on it, then accept the dialog
+    // so it doesn't block execution.
+    page.onDialog(dialog -> {
+      dialogMessages.add(dialog.message());
+      dialog.accept();
+    });
 
     page.navigate(BASE_URL);
   }
 
-  @AfterMethod
-  public void closeContext() {
+  @AfterClass
+  public void closeBrowser() {
     if (context != null) {
       context.close();
     }
-  }
-
-  @AfterClass
-  public void closeBrowser() {
     if (browser != null) {
       browser.close();
     }
