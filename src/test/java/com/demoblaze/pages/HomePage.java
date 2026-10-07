@@ -3,6 +3,8 @@ package com.demoblaze.pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Page object for the Demoblaze home page (product listing + category nav).
@@ -31,6 +33,13 @@ public class HomePage {
   /** Returns the visible product name links currently in the grid. */
   public Locator productLinks() {
     return page.locator(".card-title a");
+  }
+
+  /** Returns the trimmed names of the products currently in the grid. */
+  public List<String> productNames() {
+    return productLinks().allTextContents().stream()
+        .map(String::trim)
+        .collect(Collectors.toList());
   }
 
   /** Clicks a product by its exact visible name and lands on the product page. */
