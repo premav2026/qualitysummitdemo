@@ -51,7 +51,9 @@ public class HomePage {
 
   /** Navigates to the cart page via the top nav "Cart" link. */
   public CartPage goToCart() {
-    page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Cart")).click();
+    // Exact match: on the product page a substring match on "Cart" also hits
+    // the "Add to cart" button and trips Playwright's strict mode.
+    page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Cart").setExact(true)).click();
     page.locator("#tbodyid").waitFor();
     return new CartPage(page);
   }

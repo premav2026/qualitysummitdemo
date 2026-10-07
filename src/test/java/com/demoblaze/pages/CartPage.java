@@ -11,7 +11,7 @@ public class CartPage {
   private final Page page;
 
   private static final String CART_ROWS = "#tbodyid tr";
-  private static final String PLACE_ORDER_BTN = "#orderModalBtn";
+  private static final String PLACE_ORDER_BTN = "button[data-target='#orderModal']";
 
   public CartPage(Page page) {
     this.page = page;
