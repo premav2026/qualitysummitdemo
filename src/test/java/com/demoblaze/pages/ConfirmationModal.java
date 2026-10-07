@@ -29,6 +29,10 @@ public class ConfirmationModal {
   /** Dismisses the confirmation, returning to the home page. */
   public HomePage clickOk() {
     page.locator(OK_BTN).click();
+    // The OK callback runs `location.href = 'index.html'`. Wait for that
+    // navigation first, so a failure here shows whether OK navigated at all
+    // before we wait for the product grid to render.
+    page.waitForURL("**/index.html");
     page.locator(".card-title").first().waitFor();
     return new HomePage(page);
   }
